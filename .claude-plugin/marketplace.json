@@ -1,0 +1,11 @@
+{
+  "name": "effictive-learning",
+  "owner": {"name": "Reo"},
+  "plugins": [
+    {
+      "name": "evidence-based-tutor",
+      "source": "./plugins/evidence-based-tutor",
+      "description": "Доказательный ИИ-тьютор: припоминание, FSRS, разобранные примеры, мастери-лёрнинг, профиль учащегося."
+    }
+  ]
+}
