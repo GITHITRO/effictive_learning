@@ -1,0 +1,114 @@
+<title>Evidence-based tutor 0.6</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column, a file tree and score tables set off as specimens */
+:root{
+  --bg:#f7f8f6; --fg:#1d2321; --muted:#5d6763; --line:#d9dfdc; --panel:#eef1ef; --accent:#2f6b5a; --warn:#9a5b12;
+  --display:"Literata",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141917;--fg:#e4e9e6;--muted:#9aa5a0;--line:#2c3532;--panel:#1b2220;--accent:#7cc0a9;--warn:#e0a35a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141917;--fg:#e4e9e6;--muted:#9aa5a0;--line:#2c3532;--panel:#1b2220;--accent:#7cc0a9;--warn:#e0a35a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--body)}
+.wrap{max-width:46rem;margin:0 auto;padding-block:40px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:36px}
+h1,h2{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:2.1rem;line-height:1.15}
+h2{font-size:1.35rem;margin-bottom:10px}
+p,ul,ol{margin:0}
+section{display:grid;gap:12px}
+.lede{color:var(--muted);font-size:1.05rem}
+.eyebrow{font:500 .75rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+code,.mono{font-family:var(--mono);font-size:.88em}
+ul,ol{padding-left:1.2rem;display:grid;gap:6px}
+.tree{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;overflow-x:auto;font:400 .85rem/1.7 var(--mono);white-space:pre;margin:0}
+.tree b{color:var(--accent);font-weight:500}
+.tree i{color:var(--muted);font-style:normal}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 .75rem var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.note{border-left:3px solid var(--warn);padding:6px 0 6px 14px;color:var(--fg)}
+a{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+<div class="wrap">
+<header style="display:grid;gap:10px">
+  <div class="eyebrow">Скилл и плагин для ИИ-тьютора · версия 0.6.0 · 5 ноября 2026</div>
+  <h1>Evidence-based tutor: что проверять</h1>
+  <p class="lede">Набор инструкций и инструментов, по которым ИИ-агент учит человека фактам и умениям. В него вошли только методики с контролируемыми исследованиями именно этого метода, эффектом на отложенном тесте и известными границами применения.</p>
+</header>
+
+<section>
+  <h2>Что внутри</h2>
+  <pre class="tree"><b>evidence-based-tutor/</b>
+  SKILL.md              <i>ядро: маршрутизация, неизменная основа, профиль, ход в чате,</i>
+                        <i>честная проверка, заблуждения, личная коррекция</i>
+  <b>modules/</b>              <i>по типу знания</i>
+    facts.md  procedures.md  systems.md  argumentation.md  motor.md  presentation.md
+  <b>domains/</b>              <i>по предмету</i>
+    programming.md  languages.md  history.md  economics.md  _template.md
+  <b>scripts/</b>
+    tutor_state.py      <i>FSRS, журнал попыток с пометкой подсказки, уровни, эксперименты</i>
+    check_turn.py       <i>линтер хода: длина, один вопрос, «ты прав, но…»</i>
+    stop_hook.py        <i>в плагине: возвращает ход на доработку автоматически</i></pre>
+  <p>Плагин для Claude Code добавляет к этому <code>.claude-plugin/plugin.json</code> и <code>hooks/hooks.json</code>.</p>
+</section>
+
+<section>
+  <h2>Как устроено</h2>
+  <ol>
+    <li><b>Ядро</b> одинаково для всех предметов: припоминание до ответа, интервальные повторения, развёрнутая обратная связь на каждом шаге, вопрос до объяснения и порог мастерства (≥ 85% без подсказок, отложенная проверка и задача на перенос).</li>
+    <li>Агент определяет тип знания и предмет, затем читает нужные модули. В модулях собран каталог методик: суть, когда применять, граница и средний эффект из мета-анализов.</li>
+    <li>Личные данные ученика корректируют каталог только после надёжной выборки: ≥ 20 единиц на вариант, ≥ 2 отложенные проверки, разница ≥ 10 п. п. и 95% ДИ без нуля. До этого порога используется сжатие к каталогу, n/(n+20).</li>
+  </ol>
+</section>
+
+<section>
+  <h2>Как ставить</h2>
+  <ul>
+    <li><b>claude.ai</b>: загрузите <code>evidence-based-tutor-skill.zip</code> в разделе скиллов. Для скриптов нужно включить выполнение кода.</li>
+    <li><b>Claude Code</b>: установите <code>evidence-based-tutor-plugin.zip</code> как плагин. Stop-хук срабатывает только в папке урока, то есть там, где есть <code>learner-state.json</code> или <code>learner-profile.md</code>.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Как проверяли</h2>
+  <p>Проверка шла на симуляции: тьютор (Opus 5.5) со скиллом занимался с учеником-персоной (Sonnet 5.5). У ученика было скрытое состояние: что он понял, нагрузка 1–9 и мнение об уроке. Каждый диалог оценивал судья (Opus 5.5) по рубрике. На калибровке Sonnet в роли ученика показал себя не хуже Opus. Пять итераций обошлись примерно в $45.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Сценарий</th><th>Первый прогон</th><th>Последний прогон</th></tr></thead>
+    <tbody>
+      <tr><td>Факты: кости запястья</td><td>7 / 6 / 6 / 7</td><td>7 / 6 / 8 / 6</td></tr>
+      <tr><td>Процедуры: квадратные уравнения</td><td>8 / 7 / 7 / 7</td><td>—</td></tr>
+      <tr><td>Системы: ключевая ставка</td><td>5 / 5 / 5 / 6</td><td>6 / 5 / 8 / 6</td></tr>
+      <tr><td>Аргументация: эссе о революциях</td><td>5 / 6 / 6 / 5</td><td>6 / 4 / 7 / 5</td></tr>
+      <tr><td>Моторика: становая тяга</td><td>6 / 6 / 6 / 5</td><td>7 / 7 / 6 / 6</td></tr>
+      <tr><td>Программирование: циклы</td><td>7 / 7 / 8 / 6</td><td>—</td></tr>
+      <tr><td>Ядро: личная коррекция</td><td>7 / 6 / 6 / 6</td><td>6 / 5 / 7 / 4</td></tr>
+    </tbody>
+  </table></div>
+  <p style="color:var(--muted);font-size:.9rem">Оценки 0–10 в порядке: ядро / модуль / подача / результат ученика. Медиана длины хода тьютора упала с 300 до 80–120 слов.</p>
+</section>
+
+<section>
+  <h2>Известные слабые места</h2>
+  <ul>
+    <li>Модуль аргументации слабее остальных: тьютор пропускает разобранный пример на другой теме.</li>
+    <li>Знания иногда проверяются сразу после объяснения. Это узнавание, а не припоминание, и хук такое не ловит.</li>
+    <li>Доказательная база гуманитарных модулей и экономики слабее: часть выводов опирается на отдельные эксперименты.</li>
+    <li>Видео техники агент оценить не может, это остаётся задачей тренера.</li>
+  </ul>
+  <p class="note">Живые ученики скилл ещё не проходили. Первый живой тест по протоколу «два алгоритма, со скиллом и без, проверки на 7-й и 30-й день» готов и ждёт старта. Для вывода о скилле нужно 5–10 человек.</p>
+</section>
+
+<section>
+  <h2>Где что лежит</h2>
+  <p>В файлах проекта, в папке <code>skills/</code>:</p>
+  <ul>
+    <li><code>evidence-based-tutor/</code> — исходники скилла;</li>
+    <li><code>evidence-based-tutor-skill.zip</code>, <code>evidence-based-tutor-plugin.zip</code> — архивы для установки;</li>
+    <li><code>sim-tests/</code> — REPORT.md, скрипты стенда, логи всех прогонов;</li>
+    <li><code>live-test/</code> — протокол, инструкция и тесты живой проверки.</li>
+  </ul>
+  <p>Исходный разбор методологии CASE-v1 с метриками отбора M1–M8 вынесен в отдельный документ: <a href="https://claude.ai/artifact/N8HXPwPkri7rDdp11eU3KY">Проверка методологии CASE-v1</a>.</p>
+</section>
+</div>

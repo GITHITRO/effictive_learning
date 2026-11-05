@@ -1,0 +1,20 @@
+# Собранные архивы публикуются в GitHub Releases, а не в git
+dist/
+*.zip
+
+# Живой тест: проверки и ключи ответов хранятся приватно, пока тест идёт
+evals/live-test/tests/
+evals/live-test/keys/
+evals/live-test/logs/
+
+# Рабочие папки симуляций
+evals/sim-tests/runs/
+
+# Профили и состояние реальных учеников
+learner-state.json
+learner-profile.md
+
+__pycache__/
+*.pyc
+.DS_Store
+.env

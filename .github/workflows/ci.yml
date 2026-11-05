@@ -1,0 +1,38 @@
+name: ci
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: JSON манифесты валидны
+        run: |
+          for f in .claude-plugin/marketplace.json plugins/*/.claude-plugin/plugin.json plugins/*/hooks/hooks.json; do
+            python -m json.tool "$f" > /dev/null && echo "ok $f"
+          done
+      - name: Скрипты компилируются
+        run: python -m py_compile plugins/*/skills/*/scripts/*.py evals/sim-tests/*.py
+      - name: У скилла есть frontmatter
+        run: head -1 plugins/evidence-based-tutor/skills/evidence-based-tutor/SKILL.md | grep -qx -- '---'
+      - name: Ключи живого теста не попали в репозиторий
+        run: test ! -e evals/live-test/tests && test ! -e evals/live-test/keys
+      - name: Сборка архивов
+        run: tools/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*.zip
+      - name: Релиз по тегу
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --generate-notes
